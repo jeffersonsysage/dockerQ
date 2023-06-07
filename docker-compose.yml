@@ -1,0 +1,68 @@
+version: '3.3'
+services:
+
+  # MySQL
+  mysql:
+    container_name: "mysql"
+    image: mysql
+    volumes:
+      - ./MyFastDB/scripts:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      - MYSQL_DATABASE=jdb
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    ports:
+      - '3306:3306'
+    #network_mode: "host"
+    #network_mode: "bridge"
+    #networks:
+    #  - web_service
+
+  # FastAPI
+  api0602:
+    container_name: "api0602"
+    build: ./MyFastBack/
+    volumes:
+      - ./MyFastBack:/app
+    #command: sh -c "sleep 60s ; uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "sleep 30s ; uvicorn main:app --host api0602 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    depends_on:
+      - mysql
+    environment:
+      - DATABASE_USERNAME=root
+      - DATABASE=jdb
+      - DATABASE_HOST=mysql
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    #network_mode: "host"
+    #network_mode: "bridge"
+    #networks:
+    #  - web_service
+
+  frontend:
+    container_name: "reactapp"
+    build:
+      context: ./myfastfront/
+      dockerfile: ./Dockerfile
+    restart: always
+    #extra_hosts:
+    #  - "api0602:127.0.0.1"
+    ports:
+      - "4000:4000"
+    expose:
+      - "4000"
+    depends_on:
+      - "api0602"
+    #network_mode: "host"
+    #network_mode: "bridge"
+    #networks:
+    #  - web_service
+
+networks:
+  web_service:
+    external: true
+  bridge_service:
+    driver: bridge
